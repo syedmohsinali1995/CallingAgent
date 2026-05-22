@@ -55,6 +55,20 @@ def health():
     return {"status": "running", "version": "4.0.0"}
 
 
+@app.get("/debug/env")
+def debug_env():
+    """Temporary: check if env vars are loaded correctly on Railway."""
+    import os
+    email = os.environ.get("SUPER_ADMIN_EMAIL", "NOT SET")
+    pwd   = os.environ.get("SUPER_ADMIN_PASSWORD", "NOT SET")
+    return {
+        "SUPER_ADMIN_EMAIL":    email,
+        "SUPER_ADMIN_PASSWORD": "SET" if pwd != "NOT SET" else "NOT SET",
+        "SECRET_KEY":           "SET" if os.environ.get("SECRET_KEY") else "NOT SET",
+        "PUBLIC_URL":           os.environ.get("PUBLIC_URL", "NOT SET"),
+    }
+
+
 # ── Per-tenant Vapi Webhooks ──────────────────────────────────────────────────
 @app.post("/webhook/vapi/{tenant_id}")
 async def vapi_webhook(tenant_id: str, request: Request):

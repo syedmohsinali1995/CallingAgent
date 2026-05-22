@@ -8,9 +8,6 @@ import os
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-ADMIN_EMAIL    = os.getenv("SUPER_ADMIN_EMAIL", "admin@yourdomain.com")
-ADMIN_PASSWORD = os.getenv("SUPER_ADMIN_PASSWORD", "change-this-password")
-
 
 class LoginRequest(BaseModel):
     email: str
@@ -25,10 +22,19 @@ class RegisterRequest(BaseModel):
 
 @router.post("/login")
 def login(body: LoginRequest, db: Session = Depends(get_db)):
-    # Super admin login
-    if body.email == ADMIN_EMAIL and body.password == ADMIN_PASSWORD:
-        return {"token": create_token("admin", ADMIN_EMAIL), "role": "admin", "business_name": "Admin"}
+    # Read env vars at request time (not module load time)
+    admin_email    = os.environ.get("SUPER_ADMIN_EMAIL", "admin@yourdomain.com")
+    admin_password = os.environ.get("SUPER_ADMIN_PASSWORD", "change-this-password")
 
+    # Super admin login
+    if body.email == admin_email and body.password == admin_password:
+        return {
+            "token": create_token("admin", admin_email),
+            "role": "admin",
+            "business_name": "Admin",
+        }
+
+    # Tenant login
     tenant = db.query(Tenant).filter(Tenant.email == body.email).first()
     if not tenant or not verify_password(body.password, tenant.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
