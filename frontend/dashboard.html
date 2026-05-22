@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ڈیش بورڈ — AI کالنگ ایجنٹ</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  body { background:#f0f4f8; }
+  .sidebar { width:240px; min-height:100vh; background:#0f2027; position:fixed; top:0; right:0; }
+  .sidebar .brand { color:#00d4aa; font-size:1.2rem; font-weight:700; padding:20px; border-bottom:1px solid #203a43; }
+  .sidebar .nav-link { color:#adb5bd; padding:12px 20px; display:flex; align-items:center; gap:10px; }
+  .sidebar .nav-link:hover, .sidebar .nav-link.active { color:#00d4aa; background:rgba(0,212,170,.1); }
+  .main-content { margin-right:240px; padding:24px; }
+  .stat-card { border:none; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+  .stat-icon { width:52px; height:52px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+  .btn-call { background:#00d4aa; border:none; color:#fff; border-radius:8px; }
+  .btn-call:hover { background:#00b894; color:#fff; }
+  .topbar { background:#fff; border-radius:12px; padding:12px 20px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; justify-content:space-between; align-items:center; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="brand">🏠 AI ایجنٹ</div>
+  <nav class="mt-2">
+    <a href="dashboard.html" class="nav-link active"><i class="bi bi-speedometer2"></i> ڈیش بورڈ</a>
+    <a href="campaigns.html" class="nav-link"><i class="bi bi-telephone-outbound"></i> کمپینز</a>
+    <a href="leads.html" class="nav-link"><i class="bi bi-people"></i> لیڈز</a>
+    <a href="viewings.html" class="nav-link"><i class="bi bi-house-door"></i> ملاقاتیں</a>
+    <a href="call-logs.html" class="nav-link"><i class="bi bi-journal-text"></i> کال لاگ</a>
+    <hr style="border-color:#203a43">
+    <a href="#" class="nav-link" onclick="logout()"><i class="bi bi-box-arrow-left"></i> لاگ آؤٹ</a>
+  </nav>
+</div>
+
+<!-- Main -->
+<div class="main-content">
+  <div class="topbar">
+    <h5 class="mb-0">ڈیش بورڈ</h5>
+    <span id="bizName" class="text-muted"></span>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card stat-card p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:#e3f9f5"><span>👥</span></div>
+          <div>
+            <div class="text-muted small">کل لیڈز</div>
+            <div class="fs-3 fw-bold" id="totalLeads">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:#fff3e0"><span>🏠</span></div>
+          <div>
+            <div class="text-muted small">ملاقاتیں</div>
+            <div class="fs-3 fw-bold" id="totalViewings">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:#fce4ec"><span>📞</span></div>
+          <div>
+            <div class="text-muted small">کل کالز</div>
+            <div class="fs-3 fw-bold" id="totalCalls">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card p-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon" style="background:#e8f5e9"><span>📋</span></div>
+          <div>
+            <div class="text-muted small">کمپینز</div>
+            <div class="fs-3 fw-bold" id="totalCampaigns">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Call -->
+  <div class="card p-4 mb-4" style="border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+    <h6 class="mb-3">📞 ابھی کال کریں</h6>
+    <div class="row g-2">
+      <div class="col-md-8">
+        <input type="tel" id="quickPhone" class="form-control" placeholder="+923001234567" dir="ltr">
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-call w-100" onclick="quickCall()">کال کریں</button>
+      </div>
+    </div>
+    <div id="callResult" class="mt-2 text-success small"></div>
+  </div>
+
+  <!-- Recent Campaigns -->
+  <div class="card p-4" style="border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h6 class="mb-0">حالیہ کمپینز</h6>
+      <a href="campaigns.html" class="btn btn-sm btn-outline-success">سب دیکھیں</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light"><tr><th>نام</th><th>کل</th><th>کال ہوئی</th><th>لیڈز</th><th>حالت</th></tr></thead>
+        <tbody id="campaignTable"><tr><td colspan="5" class="text-center text-muted">لوڈ ہو رہا ہے...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/app/login.html';
+document.getElementById('bizName').textContent = localStorage.getItem('business_name') || '';
+
+const api = (url, opts={}) => fetch(url, {headers:{'Authorization':'Bearer '+token,...(opts.headers||{})}, ...opts});
+
+async function loadStats() {
+  const r = await api('/stats');
+  const d = await r.json();
+  document.getElementById('totalLeads').textContent     = d.total_leads;
+  document.getElementById('totalViewings').textContent  = d.total_viewings;
+  document.getElementById('totalCalls').textContent     = d.total_calls;
+  document.getElementById('totalCampaigns').textContent = d.total_campaigns;
+}
+
+async function loadCampaigns() {
+  const r = await api('/campaigns');
+  const list = await r.json();
+  const tbody = document.getElementById('campaignTable');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">کوئی کمپین نہیں</td></tr>'; return; }
+  tbody.innerHTML = list.slice(0,5).map(c => `
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.total}</td>
+      <td>${c.called} <small class="text-muted">(${c.progress_pct}%)</small></td>
+      <td>${c.leads_saved}</td>
+      <td><span class="badge ${c.status==='completed'?'bg-success':c.status==='running'?'bg-primary':'bg-secondary'}">${c.status}</span></td>
+    </tr>`).join('');
+}
+
+async function quickCall() {
+  const phone = document.getElementById('quickPhone').value.trim();
+  if (!phone) return;
+  const r = await api('/call', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({phone_number:phone})});
+  const d = await r.json();
+  document.getElementById('callResult').textContent = r.ok ? `✅ کال شروع ہوئی: ${d.call_id}` : `❌ ${d.detail}`;
+}
+
+function logout() { localStorage.clear(); window.location.href = '/app/login.html'; }
+
+loadStats();
+loadCampaigns();
+</script>
+</body>
+</html>

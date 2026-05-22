@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ریئل اسٹیٹ AI ایجنٹ — لاگ ان</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+  body { background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); min-height: 100vh; display: flex; align-items: center; }
+  .card { border: none; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .brand { font-size: 1.6rem; font-weight: 700; color: #00d4aa; }
+  .btn-primary { background: #00d4aa; border: none; }
+  .btn-primary:hover { background: #00b894; }
+  .form-control:focus { border-color: #00d4aa; box-shadow: 0 0 0 0.2rem rgba(0,212,170,.25); }
+  .tab-pills .nav-link { color: #555; border-radius: 8px; }
+  .tab-pills .nav-link.active { background: #00d4aa; color: #fff; }
+</style>
+</head>
+<body>
+<div class="container" style="max-width:420px">
+  <div class="card p-4">
+    <div class="text-center mb-4">
+      <div class="brand">🏠 AI کالنگ ایجنٹ</div>
+      <p class="text-muted mt-1">اردو رئیل اسٹیٹ پلیٹ فارم</p>
+    </div>
+
+    <ul class="nav nav-pills tab-pills mb-3 justify-content-center" id="authTabs">
+      <li class="nav-item"><button class="nav-link active" onclick="showTab('login')">لاگ ان</button></li>
+      <li class="nav-item"><button class="nav-link" onclick="showTab('register')">رجسٹر</button></li>
+    </ul>
+
+    <!-- Login -->
+    <div id="loginTab">
+      <div class="mb-3">
+        <input type="email" id="loginEmail" class="form-control" placeholder="ای میل" dir="ltr">
+      </div>
+      <div class="mb-3">
+        <input type="password" id="loginPassword" class="form-control" placeholder="پاسورڈ" dir="ltr">
+      </div>
+      <button class="btn btn-primary w-100" onclick="login()">لاگ ان کریں</button>
+    </div>
+
+    <!-- Register -->
+    <div id="registerTab" style="display:none">
+      <div class="mb-3">
+        <input type="text" id="regBusiness" class="form-control" placeholder="کمپنی کا نام">
+      </div>
+      <div class="mb-3">
+        <input type="email" id="regEmail" class="form-control" placeholder="ای میل" dir="ltr">
+      </div>
+      <div class="mb-3">
+        <input type="password" id="regPassword" class="form-control" placeholder="پاسورڈ" dir="ltr">
+      </div>
+      <button class="btn btn-primary w-100" onclick="register()">اکاؤنٹ بنائیں</button>
+    </div>
+
+    <div id="alertBox" class="alert mt-3 d-none"></div>
+  </div>
+</div>
+<script>
+function showTab(tab) {
+  document.getElementById('loginTab').style.display    = tab === 'login'    ? '' : 'none';
+  document.getElementById('registerTab').style.display = tab === 'register' ? '' : 'none';
+  document.querySelectorAll('.tab-pills .nav-link').forEach((el, i) => {
+    el.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+}
+
+function showAlert(msg, type='danger') {
+  const el = document.getElementById('alertBox');
+  el.className = `alert alert-${type} mt-3`;
+  el.textContent = msg;
+}
+
+async function login() {
+  const email    = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const res = await fetch('/auth/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password})
+  });
+  const data = await res.json();
+  if (!res.ok) return showAlert(data.detail || 'غلط ای میل یا پاسورڈ');
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('business_name', data.business_name);
+  localStorage.setItem('role', data.role);
+  if (data.is_setup_complete === false) {
+    window.location.href = '/app/setup.html';
+  } else {
+    window.location.href = '/app/dashboard.html';
+  }
+}
+
+async function register() {
+  const business_name = document.getElementById('regBusiness').value;
+  const email         = document.getElementById('regEmail').value;
+  const password      = document.getElementById('regPassword').value;
+  const res = await fetch('/auth/register', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({business_name, email, password})
+  });
+  const data = await res.json();
+  if (!res.ok) return showAlert(data.detail || 'خرابی ہوئی');
+  localStorage.setItem('token', data.token);
+  localStorage.setItem('business_name', business_name);
+  window.location.href = '/app/setup.html';
+}
+</script>
+</body>
+</html>

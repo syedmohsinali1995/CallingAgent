@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>کمپینز — AI کالنگ ایجنٹ</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+  body{background:#f0f4f8}
+  .sidebar{width:240px;min-height:100vh;background:#0f2027;position:fixed;top:0;right:0}
+  .sidebar .brand{color:#00d4aa;font-size:1.2rem;font-weight:700;padding:20px;border-bottom:1px solid #203a43}
+  .sidebar .nav-link{color:#adb5bd;padding:12px 20px;display:flex;align-items:center;gap:10px}
+  .sidebar .nav-link:hover,.sidebar .nav-link.active{color:#00d4aa;background:rgba(0,212,170,.1)}
+  .main-content{margin-right:240px;padding:24px}
+  .card{border:none;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  .btn-primary{background:#00d4aa;border:none}.btn-primary:hover{background:#00b894}
+  .topbar{background:#fff;border-radius:12px;padding:12px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center}
+  .progress{height:8px}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="brand">🏠 AI ایجنٹ</div>
+  <nav class="mt-2">
+    <a href="dashboard.html" class="nav-link"><i class="bi bi-speedometer2"></i> ڈیش بورڈ</a>
+    <a href="campaigns.html" class="nav-link active"><i class="bi bi-telephone-outbound"></i> کمپینز</a>
+    <a href="leads.html" class="nav-link"><i class="bi bi-people"></i> لیڈز</a>
+    <a href="viewings.html" class="nav-link"><i class="bi bi-house-door"></i> ملاقاتیں</a>
+    <a href="call-logs.html" class="nav-link"><i class="bi bi-journal-text"></i> کال لاگ</a>
+    <hr style="border-color:#203a43">
+    <a href="#" class="nav-link" onclick="localStorage.clear();window.location.href='/app/login.html'"><i class="bi bi-box-arrow-left"></i> لاگ آؤٹ</a>
+  </nav>
+</div>
+
+<div class="main-content">
+  <div class="topbar">
+    <h5 class="mb-0">بلک کالنگ کمپینز</h5>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newCampaignModal">+ نئی کمپین</button>
+  </div>
+
+  <!-- Campaign list -->
+  <div class="card p-4 mb-4">
+    <div id="campaignList">لوڈ ہو رہا ہے...</div>
+  </div>
+</div>
+
+<!-- New Campaign Modal -->
+<div class="modal fade" id="newCampaignModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" dir="rtl">
+      <div class="modal-header">
+        <h5 class="modal-title">نئی کمپین شروع کریں</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-bold">کمپین کا نام</label>
+          <input type="text" id="campName" class="form-control" placeholder="اپریل 2025 لیڈز">
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="uploadTabs">
+          <li class="nav-item"><button class="nav-link active" onclick="switchUpload('csv')">📄 CSV فائل اپلوڈ</button></li>
+          <li class="nav-item"><button class="nav-link" onclick="switchUpload('manual')">✏️ خود درج کریں</button></li>
+        </ul>
+
+        <!-- CSV Upload -->
+        <div id="csvUpload">
+          <div class="border rounded p-4 text-center" style="border-style:dashed!important">
+            <p class="text-muted">CSV فائل کا فارمیٹ:</p>
+            <code class="d-block mb-3" dir="ltr">name,phone_number,area,budget,intent<br>احمد علی,+923001234567,DHA,15000000,buy</code>
+            <input type="file" id="csvFile" accept=".csv" class="form-control">
+          </div>
+        </div>
+
+        <!-- Manual Entry -->
+        <div id="manualEntry" style="display:none">
+          <div class="mb-2">
+            <label class="form-label">فون نمبر (ایک لائن میں ایک نمبر)</label>
+            <textarea id="manualPhones" class="form-control" rows="6" placeholder="+923001234567&#10;+923009876543&#10;+923331234567" dir="ltr"></textarea>
+          </div>
+        </div>
+
+        <div id="campAlert" class="alert mt-3 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">منسوخ</button>
+        <button class="btn btn-primary" onclick="startCampaign()">🚀 کمپین شروع کریں</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/app/login.html';
+let uploadMode = 'csv';
+
+const api = (url, opts={}) => fetch(url, {headers:{'Authorization':'Bearer '+token,...(opts.headers||{})}, ...opts});
+
+function switchUpload(mode) {
+  uploadMode = mode;
+  document.getElementById('csvUpload').style.display    = mode === 'csv'    ? '' : 'none';
+  document.getElementById('manualEntry').style.display  = mode === 'manual' ? '' : 'none';
+  document.querySelectorAll('#uploadTabs .nav-link').forEach((el,i) => el.classList.toggle('active', (i===0&&mode==='csv')||(i===1&&mode==='manual')));
+}
+
+async function loadCampaigns() {
+  const r = await api('/campaigns');
+  const list = await r.json();
+  const el = document.getElementById('campaignList');
+  if (!list.length) { el.innerHTML = '<p class="text-center text-muted py-4">کوئی کمپین نہیں — اوپر "+ نئی کمپین" بٹن سے شروع کریں</p>'; return; }
+  el.innerHTML = list.map(c => `
+    <div class="border rounded p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <strong>${c.name}</strong>
+          <span class="badge ms-2 ${c.status==='completed'?'bg-success':c.status==='running'?'bg-primary':c.status==='paused'?'bg-warning':'bg-secondary'}">${c.status}</span>
+          <div class="text-muted small mt-1">${c.created_at?.split('T')[0]}</div>
+        </div>
+        <div class="d-flex gap-2">
+          ${c.status==='running'?`<button class="btn btn-sm btn-warning" onclick="pause('${c.id}')">⏸ روکیں</button>`:''}
+          ${c.status==='paused'?`<button class="btn btn-sm btn-primary" onclick="resume('${c.id}')">▶ جاری</button>`:''}
+          ${['running','paused'].includes(c.status)?`<button class="btn btn-sm btn-danger" onclick="stop('${c.id}')">⏹ بند</button>`:''}
+        </div>
+      </div>
+      <div class="row mt-3 text-center">
+        <div class="col"><div class="fs-5 fw-bold">${c.total}</div><div class="text-muted small">کل</div></div>
+        <div class="col"><div class="fs-5 fw-bold">${c.called}</div><div class="text-muted small">کال ہوئی</div></div>
+        <div class="col"><div class="fs-5 fw-bold text-success">${c.leads_saved}</div><div class="text-muted small">لیڈز</div></div>
+        <div class="col"><div class="fs-5 fw-bold text-warning">${c.viewings_booked}</div><div class="text-muted small">ملاقاتیں</div></div>
+        <div class="col"><div class="fs-5 fw-bold text-danger">${c.failed}</div><div class="text-muted small">ناکام</div></div>
+      </div>
+      <div class="progress mt-2"><div class="progress-bar bg-success" style="width:${c.progress_pct}%"></div></div>
+      <div class="text-muted small mt-1">${c.progress_pct}% مکمل</div>
+    </div>`).join('');
+}
+
+async function startCampaign() {
+  const name = document.getElementById('campName').value.trim();
+  if (!name) return alert('کمپین کا نام ضروری ہے');
+  let r;
+  if (uploadMode === 'csv') {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) return alert('CSV فائل منتخب کریں');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('name', name);
+    r = await fetch('/campaign/upload-csv', {method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd});
+  } else {
+    const lines = document.getElementById('manualPhones').value.trim().split('\n').filter(Boolean);
+    const leads = lines.map(p => ({phone_number: p.trim()}));
+    r = await api('/campaign/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, leads})});
+  }
+  const d = await r.json();
+  if (!r.ok) { document.getElementById('campAlert').className='alert alert-danger'; document.getElementById('campAlert').textContent=d.detail; return; }
+  bootstrap.Modal.getInstance(document.getElementById('newCampaignModal')).hide();
+  loadCampaigns();
+}
+
+async function pause(id)  { await api(`/campaign/${id}/pause`,  {method:'POST'}); loadCampaigns(); }
+async function resume(id) { await api(`/campaign/${id}/resume`, {method:'POST'}); loadCampaigns(); }
+async function stop(id)   { if(confirm('کمپین بند کریں؟')) { await api(`/campaign/${id}/stop`, {method:'POST'}); loadCampaigns(); } }
+
+loadCampaigns();
+setInterval(loadCampaigns, 10000); // auto-refresh every 10s
+</script>
+</body>
+</html>
