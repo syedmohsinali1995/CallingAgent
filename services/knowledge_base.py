@@ -8,11 +8,18 @@ import json
 import os
 from typing import List, Dict, Any
 
-_PROPERTIES_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "properties.json")
+# Absolute path — works locally, in Docker (/app), and on Railway
+_BASE_DIR        = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_PROPERTIES_FILE = os.path.join(_BASE_DIR, "data", "properties.json")
+
 
 def _load_properties() -> List[dict]:
+    if not os.path.exists(_PROPERTIES_FILE):
+        print(f"[KB] Warning: {_PROPERTIES_FILE} not found — returning empty list")
+        return []
     with open(_PROPERTIES_FILE, encoding="utf-8") as f:
         return json.load(f)
+
 
 _PROPERTIES = _load_properties()
 
